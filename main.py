@@ -3,6 +3,16 @@ import pyautogui as pag
 import pyperclip
 from time import sleep
 
+math_key_words = ("МАТИМАТИКЕ","МАТКЕ")
+rus_key_words = ("РУССКОМУ","РУСКОМУ","РУС ЯЗ")
+subject_dict = {"РУССКИЙ": rus_key_words,
+                "МАТИМАТИКА": math_key_words,}
+task_request = ("ЧТО","ЧЁ","КАКОЕ","КАКИЕ")
+task_dict = {"РУССКИЙ": "упр 146",
+             "МАТИМАТИКА": "№ 578,579"}
+
+
+
 
 def start_whatsapp():
     webbrowser.open_new("https://web.whatsapp.com/")
@@ -34,7 +44,7 @@ def get_last_messeg(chat_name):
         colour = pag.pixel(x,y)
         white = (255,255,255)
         if colour == white:
-            pag.click(x,y, 2,0.2)
+            pag.click(x,y, 3,0.2)
             pag.hotkey("ctrl", "c")
             Text = pyperclip.paste()
         return Text
@@ -47,15 +57,48 @@ def send_masseg(chat_name, masseg):
     pag.hotkey("ctrl", "v")
     pag.hotkey("enter")
 
+def task_responder(subj,chat):
+    print(subj)
+    send_masseg(chat,task_dict[subj])
 
+def task_saver(subj, big_masseg):
+    global task_dict
+    print(subj,big_masseg)
+    for i,char in enumerate(big_masseg):
+        if char == "@":
+            start_point = i
+            break
+    task_msg = big_masseg[start_point:]
+    task_dict[subj] = task_msg
 
+def masseg_parser(masseg, chat):
+    big_masseg = masseg.upper()
+    question_flg = False
+    for str in task_request:
+        question_flg = question_flg or (str in big_masseg)
+    if question_flg:
+        for subj in subject_dict:
+            task_flg = False
+            for str in subject_dict[subj]:
+                task_flg = task_flg or (str in big_masseg)
+            if task_flg:
+                task_responder(subj,chat)
+    else:
+        give_task_flg = ("БОТ, ПРИМИ ЗАДАНИЕ" in big_masseg)
+        if give_task_flg:
+            for subj in subject_dict:
+                 if subj in big_masseg:
+                    task_saver(subj,big_masseg)
 
 def main():
     start_whatsapp()
-    chat_name="Домашнее задание 6 Г"
-    text=get_last_messeg(chat_name)
+
     chat_name="Папа Мегафон"
-    send_masseg(chat_name,text)
+    while True:
+        text=get_last_messeg(chat_name)
+        if text:
+            masseg_parser(text, chat_name)
+        sleep(2)
 
 if __name__ == '__main__':
     main()
