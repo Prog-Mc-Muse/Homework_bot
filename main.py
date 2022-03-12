@@ -1,17 +1,65 @@
 import webbrowser
 import pyautogui as pag
 import pyperclip
+import json
+import datetime
 from time import sleep
 
-math_key_words = ("МАТИМАТИКЕ","МАТКЕ")
+math_key_words = ("МАТИМАТИКЕ","МАТКЕ", "МАТЕМАТИКЕ")
 rus_key_words = ("РУССКОМУ","РУСКОМУ","РУС ЯЗ")
+bio_key_words = ("БИОЛОГИИ")
+geo_key_words = ("ГЕОГРАФИИ","ГИОГРАФИИ")
+info_key_words = ("ИНФОРМАТИКЕ","ИНФАРМАТИКЕ","ИНФАРМАТИКИ", "ИНФЕ")
+history_key_words = ("ИСТОРИИ"),
+lit_key_words = ("ЛИТРЕ", "ЛИТИРАТУРЕ", "ЛИТЕРАТУРЕ")
+nat_rus_key_words = ("РОДНОМУ РУССКОМУ", "РОДНОМУ РУССКОМУ ЯЗЫКУ", "РОД РУС", "РОДНОМУ РУС", "РОД РУССКОМУ")
+nat_lit_key_words = ("РОДНОЙ ЛИТЕРАТУРЕ", "РОДНОЙ ЛИТИРАТУРЕ", "РОДНОЙ ЛИТРЕ", "РОД ЛИТРЕ", "РОД ЛИТЕРАТУРЕ")
 subject_dict = {"РУССКИЙ": rus_key_words,
-                "МАТИМАТИКА": math_key_words,}
+                "МАТЕМАТИКА": math_key_words,
+                "БИОЛОГИЯ": bio_key_words,
+                "ГЕОГРАФИЯ": geo_key_words,
+                "ИНФАРМАТИКА": info_key_words,
+                "ИСТОРИЯ": history_key_words,
+                "ЛИТЕРАТУРА": lit_key_words,
+                "РОДНАЯ ЛИТЕРАТУРА": nat_lit_key_words,
+                "РОДНОЙ РУССКИЙ": nat_rus_key_words,}
 task_request = ("ЧТО","ЧЁ","КАКОЕ","КАКИЕ")
-task_dict = {"РУССКИЙ": "упр 146",
-             "МАТИМАТИКА": "№ 578,579"}
+schedule_dict = {"РУССКИЙ": [1,1,1,1,1,0,0],
+                 "МАТЕМАТИКА": [1,1,1,1,1,0,0],
+                 "БИОЛОГИЯ": [0,0,1,1,0,0,0],
+                 "ГЕОГРАФИЯ": [0,0,1,0,0,0,0],
+                 "ИНФАРМАТИКА": [0,0,0,1,0,0,0],
+                 "ИСТОРИЯ": [1,0,0,1,0,0,0],
+                 "ЛИТЕРАТУРА": [0,1,0,0,1,0,0],
+                 "РОДНАЯ ЛИТЕРАТУРА": [0,0,0,0,1,0,0],
+                 "РОДНОЙ РУССКИЙ": [0,0,0,0,1,0,0],}
+
+def actualyty_chaker(subj):
+    year = task_dict[subj]['год']
+    month = task_dict[subj]['месяц']
+    day = task_dict[subj]['день']
+    task_date = datetime.date(year, month, day)
+    task_week_day = task_date.weekday()
+    for ii in range(7):
+        cur_day = (task_week_day + ii + 1) % 7
+        if schedule_dict[subj][cur_day]:
+            actualyty_days = cur_day
+            break
+    cur_date = datetime.date.today()
+    dt = cur_date - task_date
+    print(dt)
+    delta_days = int(dt.days)
+    if delta_days > actualyty_days:
+        return False
+    else:
+        return True
 
 
+
+def init():
+    global task_dict
+    with open("tasks.json", "r") as f:
+        task_dict = json.load(f)
 
 
 def start_whatsapp():
@@ -30,6 +78,25 @@ def chat_select(chat_name):
     pyperclip.copy(chat_name)
     pag.hotkey("ctrl", "v")
     pag.hotkey("enter")
+
+def get_last_messeg_in_open_chat():
+    Text = None
+    x_y = pag.locateOnScreen("masseg.png", confidence = 0.7)
+    print(x_y)
+    if x_y:
+        pag.moveTo(x_y[0],x_y[1])
+        pag.moveRel(35,-40)
+        x,y = pag.position()
+        colour = pag.pixel(x,y)
+        white = (255,255,255)
+        if colour == white:
+            pag.click(x,y, 3,0.2)
+            pag.hotkey("ctrl", "c")
+            Text = pyperclip.paste()
+        return Text
+    else:
+        return None
+
 
 def get_last_messeg(chat_name):
     chat_select(chat_name)
@@ -51,6 +118,11 @@ def get_last_messeg(chat_name):
     else:
         return None
 
+def send_masseg_in_open_chat(chat_name, masseg):
+    pyperclip.copy(masseg)
+    pag.hotkey("ctrl", "v")
+    pag.hotkey("enter")
+
 def send_masseg(chat_name, masseg):
     chat_select(chat_name)
     pyperclip.copy(masseg)
@@ -59,7 +131,7 @@ def send_masseg(chat_name, masseg):
 
 def task_responder(subj,chat):
     print(subj)
-    send_masseg(chat,task_dict[subj])
+    send_masseg_in_open_chat(chat,task_dict[subj]['задание'])
 
 def task_saver(subj, big_masseg):
     global task_dict
@@ -69,7 +141,14 @@ def task_saver(subj, big_masseg):
             start_point = i
             break
     task_msg = big_masseg[start_point:]
-    task_dict[subj] = task_msg
+    task_dict[subj]['задание'] = task_msg
+    json_save()
+
+
+def json_save():
+    with open("tasks.json", "w") as f:
+        json.dump(task_dict, f, ensure_ascii= False, indent= 2, sort_keys= True)
+
 
 def masseg_parser(masseg, chat):
     big_masseg = masseg.upper()
@@ -94,11 +173,13 @@ def main():
     start_whatsapp()
 
     chat_name="Папа Мегафон"
+    chat_select(chat_name)
     while True:
-        text=get_last_messeg(chat_name)
+        text=get_last_messeg_in_open_chat()
         if text:
             masseg_parser(text, chat_name)
         sleep(2)
 
 if __name__ == '__main__':
+    init()
     main()
