@@ -29,7 +29,7 @@ schedule_dict = {"РУССКИЙ": [1,1,1,1,1,0,0],
                  "БИОЛОГИЯ": [0,0,1,1,0,0,0],
                  "ГЕОГРАФИЯ": [0,0,1,0,0,0,0],
                  "ИНФАРМАТИКА": [0,0,0,1,0,0,0],
-                 "ИСТОРИЯ": [1,0,0,1,0,0,0],
+                 "ИСТОРИЯ": [1,0,0,1,0,1,0],
                  "ЛИТЕРАТУРА": [0,1,0,0,1,0,0],
                  "РОДНАЯ ЛИТЕРАТУРА": [0,0,0,0,1,0,0],
                  "РОДНОЙ РУССКИЙ": [0,0,0,0,1,0,0],}
@@ -43,7 +43,7 @@ def actualyty_chaker(subj):
     for ii in range(7):
         cur_day = (task_week_day + ii + 1) % 7
         if schedule_dict[subj][cur_day]:
-            actualyty_days = cur_day
+            actualyty_days = ii
             break
     cur_date = datetime.date.today()
     dt = cur_date - task_date
@@ -82,7 +82,6 @@ def chat_select(chat_name):
 def get_last_messeg_in_open_chat():
     Text = None
     x_y = pag.locateOnScreen("masseg.png", confidence = 0.7)
-    print(x_y)
     if x_y:
         pag.moveTo(x_y[0],x_y[1])
         pag.moveRel(35,-40)
@@ -103,7 +102,6 @@ def get_last_messeg(chat_name):
     sleep(2)
     Text = None
     x_y = pag.locateOnScreen("masseg.png", confidence = 0.7)
-    print(x_y)
     if x_y:
         pag.moveTo(x_y[0],x_y[1])
         pag.moveRel(35,-40)
@@ -136,12 +134,17 @@ def task_responder(subj,chat):
 def task_saver(subj, big_masseg):
     global task_dict
     print(subj,big_masseg)
+    cur_date = datetime.datetime.now()
     for i,char in enumerate(big_masseg):
         if char == "@":
             start_point = i
             break
     task_msg = big_masseg[start_point:]
     task_dict[subj]['задание'] = task_msg
+    task_dict[subj]['год'] = cur_date.year
+    task_dict[subj]['месяц'] = cur_date.month
+    task_dict[subj]['день'] = cur_date.day
+    task_dict[subj]['час'] = cur_date.hour
     json_save()
 
 
@@ -160,8 +163,10 @@ def masseg_parser(masseg, chat):
             task_flg = False
             for str in subject_dict[subj]:
                 task_flg = task_flg or (str in big_masseg)
-            if task_flg:
+            if task_flg and actualyty_chaker(subj):
                 task_responder(subj,chat)
+            else:
+                print("не сохранено актуального задания")
     else:
         give_task_flg = ("БОТ, ПРИМИ ЗАДАНИЕ" in big_masseg)
         if give_task_flg:
@@ -170,6 +175,7 @@ def masseg_parser(masseg, chat):
                     task_saver(subj,big_masseg)
 
 def main():
+    print(actualyty_chaker("ГЕОГРАФИЯ"))
     start_whatsapp()
 
     chat_name="Папа Мегафон"
