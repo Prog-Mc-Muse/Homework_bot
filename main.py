@@ -1,9 +1,34 @@
 import webbrowser
+from flask import Flask, render_template, request, redirect
 import pyautogui as pag
 import pyperclip
 import json
 import datetime
 from time import sleep
+
+app = Flask(__name__)
+
+@app.route('/')
+def tasks():
+    return render_template('tasks.html', task_dict = task_dict)
+
+
+@app.route('/update/<subj>', methods = ['POST','GET'])
+def update(subj):
+    print(subj)
+    if request.method =='POST':
+        print('POST')
+        stp_datetime = datetime.datetime.now()
+        task_dict[subj]['задание'] = request.form['task']
+        task_dict[subj]['год'] = stp_datetime.year
+        task_dict[subj]['месяц'] = stp_datetime.month
+        task_dict[subj]['день'] = stp_datetime.day
+        task_dict[subj]['час'] = stp_datetime.hour
+        json_save()
+        return redirect('/')
+    else:
+        return render_template('subj.html', task_dict = task_dict, subj = subj)
+
 
 math_key_words = ("МАТИМАТИКЕ","МАТКЕ", "МАТЕМАТИКЕ")
 rus_key_words = ("РУССКОМУ","РУСКОМУ","РУС ЯЗ")
@@ -188,4 +213,5 @@ def main():
 
 if __name__ == '__main__':
     init()
-    main()
+    app.run(debug=True)
+    #main()
