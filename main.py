@@ -4,8 +4,10 @@ import pyautogui as pag
 import pyperclip
 import json
 import datetime
+from threading import Thread
 from time import sleep
 
+STEP = 0
 app = Flask(__name__)
 
 @app.route('/')
@@ -199,8 +201,7 @@ def masseg_parser(masseg, chat):
                  if subj in big_masseg:
                     task_saver(subj,big_masseg)
 
-def main():
-    print(actualyty_chaker("ГЕОГРАФИЯ"))
+def WhatsApp_body():
     start_whatsapp()
 
     chat_name="Папа Мегафон"
@@ -211,7 +212,15 @@ def main():
             masseg_parser(text, chat_name)
         sleep(2)
 
+def main():
+    global  STEP
+    if STEP == 0:
+        init()
+        th_stp = Thread(target= WhatsApp_body)
+        print("Поехали!!")
+        th_stp.start()
+        app.run(debug=True, use_reloader=False)
+        STEP += 1
+
 if __name__ == '__main__':
-    init()
-    app.run(debug=True)
-    #main()
+    main()
