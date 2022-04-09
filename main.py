@@ -219,7 +219,7 @@ def main():
         th_stp = Thread(target= WhatsApp_body)
         print("Поехали!!")
         th_stp.start()
-        app.run(debug=True, use_reloader=False)
+        app.run( host='0.0.0.0', debug=True, use_reloader=False)
         STEP += 1
 
 if __name__ == '__main__':
